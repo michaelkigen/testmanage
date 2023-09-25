@@ -9,8 +9,7 @@ from mpesa.models import PaymentTransaction
 class Profile(models.Model):
     profile_pic = models.ImageField( upload_to='profile_images', null = True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL , on_delete= models.CASCADE, related_name= 'profile')
-    points = models.DecimalField(max_digits=3,decimal_places=1,default= 1)
-    # payments = models.ManyToManyField(PaymentTransaction)
+    points = models.DecimalField(max_digits=6,decimal_places=1,default= 1)
     
     @receiver(post_save, sender=User)
     def create_user_profile(sender, instance, created, **kwargs):

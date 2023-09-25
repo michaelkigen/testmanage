@@ -37,7 +37,7 @@ from menu.models import Cart , Add_item_to_cart
 from django.db.models import Sum
 from Profile.models import Profile
 from users.models import User
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions,status
 from .models import PaymentTransaction
 from .serializers import PaymentTransactionSerializer
 from menu.models import Order
@@ -45,6 +45,7 @@ from cloudinary import uploader
 import qrcode
 from PIL import Image
 from menu.views import CheckoutView
+from django.shortcuts import get_object_or_404
 from users.emailer import Orderdfood_emailer
 # Create your views here.
 
@@ -60,8 +61,9 @@ def QR_code_generator(data,order_id):
     QRcode = qrcode.QRCode(
         error_correction=qrcode.constants.ERROR_CORRECT_L
     )
-    QRcode.add_data(data)
-    print('DATA ENCODED:', data)
+    
+    QRcode.add_data( order_id)
+   
     # generating QR code
     QRcode.make()
     # taking color name from user
@@ -81,6 +83,7 @@ def QR_code_generator(data,order_id):
     uploaded_image = uploader.upload(qr_image_name)
     order = Order.objects.filter(order_id = order_id).first()
     order.qrc_image = uploaded_image['url']
+    print(str(order.qrc_image))
     order.save()
     print('QR code generated!')
     
@@ -98,6 +101,9 @@ class Redeem_points(APIView):
 
         total = sum([item.quantity * item.food.price for item in cart.cart_item.all()])
         print('the total amount is: ', total)
+        
+        if total == 0 :
+            return Response({'error':'please make new order'}) 
     
         if points < 40:
             return Response({'error':'your have not reached withdrawal limit'}) 
@@ -135,7 +141,8 @@ class Redeem_points(APIView):
                 'food_name': food.food_name,
                 'quantity': quantity
             })
-
+        order.payment_mode = 'qcoins'
+        order.save()
         Orderdfood_emailer(request, user.email, first_name, last_name, ordered_food_list)
         return Response({'message':'order made'})
     
@@ -228,7 +235,7 @@ class CheckTransactionOnline(APIView):
                     profile = Profile.objects.get(user=user) 
                     
                
-                    if amount >= 10:
+                    if amount >= 50:
                         profile.points += 5  
                         profile.save()
                    #sending email
@@ -266,8 +273,6 @@ class CheckTransactionOnline(APIView):
                 "message": "Server Error. Transaction not found",
                 "status": False
             }, status=400)
-
-
 
 
 class CheckTransaction(APIView):
@@ -417,4 +422,17 @@ class PaymentTransactionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return PaymentTransaction.objects.filter(user=user)
+        return PaymentTransaction.objects.filter(is_successful= False)
+
+class SearchTransaction(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, trans_id, format=None):
+        # Use a GET request and specify trans_id as a URL parameter
+        # This allows you to retrieve a specific transaction directly
+        transaction = get_object_or_404(PaymentTransaction, trans_id=trans_id)
+
+        # Now, you can serialize the transaction and return it as a response
+        serializer = PaymentTransactionSerializer(transaction)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        

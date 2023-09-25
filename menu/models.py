@@ -90,6 +90,10 @@ STATUS = (
     (COMPLETE_ORDER, 'Complete'),
     (CANCELED_ORDER, 'Failed'),
 )
+MODE_OF_PAYMENTS = (
+    ('MPESA','mpesa'),
+    ('QCOINS','qcoins')
+)
 
 class  Order(models.Model):
     order_id = models.UUIDField(default=uuid.uuid4 ,primary_key= True,auto_created= True, editable=False)
@@ -97,6 +101,9 @@ class  Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     state = models.CharField(max_length=50, choices= STATUS , default= PENDING_ORDER)
     qrc_image = models.ImageField(upload_to='qr_code_images',  null=True)
+    reciept = models.FileField(upload_to='reciepts', null= True)
+    scaned_time = models.DateTimeField( auto_now=True, auto_now_add=False, null= True)
+    payment_mode =models.CharField(max_length=50, choices= MODE_OF_PAYMENTS , default= 'mpesa')
     
     class Meta:
         unique_together = ('order_id',)
@@ -108,3 +115,5 @@ class Orderd_Food(models.Model):
     food  = models.ForeignKey(Menu_Object , on_delete= models.CASCADE, related_name='food')
     order = models.ForeignKey(Order, on_delete=models.CASCADE,related_name='ordered_food')
     quantity = models.PositiveIntegerField(default=1) 
+    
+    

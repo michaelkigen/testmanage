@@ -3,20 +3,12 @@ from .models import Profile
 from cloudinary import uploader
 from mpesa.models import PaymentTransaction
 
-class PaymentTransactionSerializer(serializers.ModelSerializer):
-    # Define the fields you want to include for PaymentTransaction
-
-    class Meta:
-        model = PaymentTransaction
-        fields = ('phone_number','checkout_request_id')
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    payments = PaymentTransactionSerializer(many=True, read_only=True)
-
     class Meta:
         model = Profile
-        fields = ('user', 'profile_pic', 'payments')
+        fields = ('user', 'profile_pic', 'points')
 
 
     def create(self, validated_data):

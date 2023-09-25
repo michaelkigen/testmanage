@@ -55,6 +55,10 @@ INSTALLED_APPS = [
     'cloudinary',
     'mpesa',
     'django_daraja',
+    'reciept',
+    'chatbox',
+    'records',
+    'review',
 ]
 
 MIDDLEWARE = [

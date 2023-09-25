@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from cloudinary.exceptions import Error
+from users.models import User
 from .serializers import ProfileSerializer
 from .models import Profile
 

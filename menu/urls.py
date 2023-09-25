@@ -1,12 +1,12 @@
 from rest_framework.routers import DefaultRouter
-from .views import CartViewSet, MenuAPiView, CategoriesAPiView, AddToCartViewSet,CheckoutView
+from .views import CartViewSet, MenuAPiView, MenuupdateAPiView,CategoriesAPiView, AddToCartViewSet,CheckoutView,ProcessOrderView,OrdererdFood
 #from rest_framework_nested.routers import DefaultRouter, NestedSimpleRouter
 from django.urls import path, include
 
 # Create the main router
 router = DefaultRouter()
 
-router.register('food', MenuAPiView)
+# router.register('food', MenuAPiView)
 router.register('cart', CartViewSet , basename='cart' )
 router.register('category', CategoriesAPiView)
 #router.register('carting', Add_to_cart)
@@ -23,5 +23,9 @@ nested_routes = [
 urlpatterns = [
     path("", include(router.urls)),
     path("", include(nested_routes)),
-    path("order/", CheckoutView.as_view())
+    path("order/", CheckoutView.as_view()),
+    path("process/", ProcessOrderView.as_view()),
+    path("food/", MenuAPiView.as_view({'get': 'list','post': 'create'})),
+    path("food/<uuid:pk>/", MenuupdateAPiView.as_view({'get': 'retrieve', 'put': 'update','patch':'partial_update' })),
+    path("orderd-food/<uuid:pk>/", OrdererdFood.as_view())
 ]

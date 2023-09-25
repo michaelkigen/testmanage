@@ -35,7 +35,6 @@ def get_token():
     if r.status_code == 200:
         jonresponse = json.loads(r.content)
         access_token = jonresponse['access_token']
-        print(access_token)
         return access_token
     elif r.status_code == 400:
         print('Invalid credentials.')
@@ -47,6 +46,7 @@ def sendSTK(phone_number, amount, orderId=0, transaction_id=None, shortcode=None
     code = shortcode or SHORT_CODE
     party_b = TILL_NUMBER or code
     access_token = get_token()
+    print(access_token)
     if access_token is False:
         raise Exception("Invalid Consumer key or secret or both")
 

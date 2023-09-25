@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Menu_Object, Categories, Cart, Add_item_to_cart,Order , Orderd_Food
 from cloudinary.models import CloudinaryField
 from mpesa.models import PaymentTransaction
+from users.serializers import UserSerializer
 
 class simple_menu_serializer(serializers.ModelSerializer):
     class Meta:
@@ -9,9 +10,6 @@ class simple_menu_serializer(serializers.ModelSerializer):
         fields =['food_id', 'food_name', 'price','is_avilable']
 
 class Menu_ObjectSerializer(serializers.ModelSerializer):
-    
-    
-   
     class Meta:
         model = Menu_Object
         fields = ['food_id', 'food_name', 'food_image', 'price', 'description', 'is_avilable']
@@ -134,12 +132,18 @@ class OrderedFoodSerializer(serializers.ModelSerializer):
     
 class Order_Serializer(serializers.ModelSerializer):
     total = serializers.SerializerMethodField(method_name='total_price')
-
+    user = UserSerializer()
     class Meta:
         model = Order
-        fields = ['order_id','qrc_image','state','created_at', 'total']
+    
+        fields = ['order_id','qrc_image','state','created_at','scaned_time','reciept','total','payment_mode','user']
+        extra_kwarg = {'user':{'read_only': True}}
 
     def total_price(self, order: Order):
         foods = order.ordered_food.all()
         price = sum([food.quantity * food.food.price for food in foods])
         return price
+
+class OrderIdSerializer(serializers.Serializer):
+    order_id = serializers.UUIDField()
+    

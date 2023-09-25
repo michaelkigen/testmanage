@@ -40,7 +40,7 @@ class Send_verification_code(APIView):
         print(f'the code is:{verification_code}') 
         Verifications.verification_code = verification_code
         send_Verification_Email(request, email, name, verification_code)
-        return Response({'message': 'Verification code has been sent'},
+        return Response({'message': 'Verification code has been sent','verification_code':verification_code},
                                 status=status.HTTP_200_OK)
 
 class Verify_Code(APIView):
@@ -105,6 +105,9 @@ def get_tokens_for_user(user):
     refresh['first_name'] = user.first_name
     refresh['last_name'] = user.last_name
     refresh['phone_number'] = user.phone_number
+    refresh['is_admin'] = user.is_admin
+    refresh['is_staff'] = user.is_staff
+    refresh['is_ccare'] = user.is_ccare
     return refresh 
 
 class User_registration(APIView):
