@@ -46,46 +46,42 @@ import qrcode
 from PIL import Image
 from menu.views import CheckoutView
 from django.shortcuts import get_object_or_404
-from users.emailer import Orderdfood_emailer
+from django.conf import settings
+import cloudinary
+from cloudinary import uploader
 # Create your views here.
+def QR_code_generator(order_id):
+    try:
+        # Generate QR code with the order ID
+        QRcode = qrcode.QRCode(
+            error_correction=qrcode.constants.ERROR_CORRECT_L
+        )
+        QRcode.add_data(order_id)
+        print("encrypted DATA ", order_id)
+        
+        QRimg = QRcode.make_image(fill_color='black', back_color='white').convert('RGB')
+        qr_image_name = f"{order_id}.png"
+        QRimg.save(qr_image_name)
+        
+        # Upload the QR code image to Cloudinary
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
+            api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
+            api_secret=settings.CLOUDINARY_STORAGE['API_SECRET']
+        )
+        uploaded_image = uploader.upload(qr_image_name)
+        
+        # Save the Cloudinary URL in the database
+        order = Order.objects.get(order_id=order_id)
+        order.qrc_image = uploaded_image['url']
+        print("Qr code : ",uploaded_image['url'])
+        order.save()
+        
+        print('QR code generated!')
+    except Exception as e:
+        print("Error generating QR code:", e)
+        raise
 
-def QR_code_generator(data,order_id):
-    Logo_link = 'templates/logo.png'
-    logo = Image.open(Logo_link)
-    # taking base width
-    basewidth = 100
-    # adjust image size
-    wpercent = (basewidth/float(logo.size[0]))
-    hsize = int((float(logo.size[1])*float(wpercent)))
-    logo = logo.resize((basewidth, hsize), Image.ANTIALIAS)
-    QRcode = qrcode.QRCode(
-        error_correction=qrcode.constants.ERROR_CORRECT_L
-    )
-    
-    QRcode.add_data( order_id)
-   
-    # generating QR code
-    QRcode.make()
-    # taking color name from user
-    QRcolor = 'black'
-    # adding color to QR code
-    QRimg = QRcode.make_image(
-        fill_color=QRcolor, back_color="white").convert('RGB')
-    # set size of QR code
-    # pos = ((QRimg.size[0] - logo.size[0]) // 2,
-    #     (QRimg.size[1] - logo.size[1]) // 2)
-    # QRimg.paste(logo, pos)
-    # save the QR code generated
-    qr_image_name = f"{order_id}.png"
-                    # Save the QR code image with the desired name
-    QRimg.save(qr_image_name)
-    
-    uploaded_image = uploader.upload(qr_image_name)
-    order = Order.objects.filter(order_id = order_id).first()
-    order.qrc_image = uploaded_image['url']
-    print(str(order.qrc_image))
-    order.save()
-    print('QR code generated!')
     
 class Redeem_points(APIView):
     permission_classes = [AllowAny, ]
@@ -143,7 +139,7 @@ class Redeem_points(APIView):
             })
         order.payment_mode = 'qcoins'
         order.save()
-        Orderdfood_emailer(request, user.email, first_name, last_name, ordered_food_list)
+        
         return Response({'message':'order made'})
     
 
@@ -204,7 +200,7 @@ class CheckTransactionOnline(APIView):
                 print('STATUS: ', status)
                 message = status_response.get('message')
                 
-                if status == True:
+                if status:
                     user = request.user
                     checkout_view = CheckoutView()
                     order_id = checkout_view.post(request).data.get('order_id')
@@ -219,49 +215,21 @@ class CheckTransactionOnline(APIView):
                     print('SAVED TRANSACTION :', transaction)
                     
                     # GENERATION OF QR CODE
-                    
-                   
                     data ={
                         "user" : user,
                         "checkout_id": transaction.checkout_request_id,
                         "transaction_id": transaction.trans_id,
-                        "order_id":transaction.order_id
+                        "order_id": order_id  # Use the same order_id for QR code generation and saving
                     } 
-                    # adding URL or text to QRcode
-                    QR_code_generator(data,order_id)
-                    
-                   #handling  points  
+                    QR_code_generator(order_id)  # Pass the same order_id
+                  
+                    #handling  points  
                     amount = transaction.amount  
                     profile = Profile.objects.get(user=user) 
-                    
-               
                     if amount >= 50:
                         profile.points += 5  
                         profile.save()
-                   #sending email
-                    
-                    order = Order.objects.get(order_id=order_id)
-                    orderd_food = order.ordered_food.all()
-                    print('ORDERED FOOD TO THE EMAIL: ', orderd_food)
-                    ordered_food_list = []
-                    first_name = user.first_name
-                    last_name = user.last_name
-                    for ordered_food_item in orderd_food:
-                        food = ordered_food_item.food
-                        quantity = ordered_food_item.quantity
-                        ordered_food_list.append({
-                            'food_name': food.food_name,
-                            'quantity': quantity
-                        })
-
-                    Orderdfood_emailer(request, user.email, first_name, last_name, ordered_food_list)
-                    
-                    
-
-                      
-                    
-                 # Pass the transaction as a list
-
+                
                 return JsonResponse(status_response, status=200)
             else:
                 return JsonResponse({
@@ -273,6 +241,7 @@ class CheckTransactionOnline(APIView):
                 "message": "Server Error. Transaction not found",
                 "status": False
             }, status=400)
+
 
 
 class CheckTransaction(APIView):

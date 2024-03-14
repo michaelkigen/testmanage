@@ -18,7 +18,8 @@ from django.shortcuts import get_object_or_404
 
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
-from django.utils import timezone
+from django.utils.timezone import timezone
+
 import cloudinary
 from cloudinary import api
 from django.conf import settings
@@ -253,7 +254,7 @@ class ProcessOrderView(views.APIView):
 class OrdererdFood(views.APIView):
     def get(self, request, pk):
         try:
-            order = Order.objects.get(order_id=pk)
+            order = Order.objects.filter(order_id=pk).first()
         except Order.DoesNotExist:
             return Response({'detail': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
         

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import ValidationError
 from .models import User,Verifications
 from django.contrib.auth.hashers import make_password
-from .emailer import send_Verification_Email
+
 
 class Verification_serializer(serializers.ModelSerializer):
     class Meta:
@@ -54,9 +54,18 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         # Additional code for verification and saving the verification code
-        Verifications.objects.create(email=user.email, verification_code=verification_code)
+        Verifications.objects.create(phone_number=user.phone_number, verification_code=verification_code)
         return user
-        
+
+
+class UserDetailedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['id','phone_number', 'email', 'first_name', 'last_name','password','is_admin','is_staff','is_ccare']
+        extra_kwargs = {'password': {'write_only': True},'id': {'read_only': True}}
+
+    
 
 class UserLoginSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(max_length=15,min_length = 4)

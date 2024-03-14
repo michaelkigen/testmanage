@@ -68,7 +68,7 @@ class User(AbstractBaseUser):
 
 
 class Verifications(models.Model):
-    email = models.EmailField(verbose_name='email', max_length=202,null= True)
+    phone_number = models.CharField(max_length=20,null=True)
     verification_code = models.CharField(max_length=6, blank=True, null=True)
     verification_code_sent = models.DateTimeField(blank=True, null=True)
     

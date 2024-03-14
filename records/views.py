@@ -30,17 +30,25 @@ def recorder(food, user):
                 
                 
                 food_name = item['food']['food_name']
+                print("recorded",food_name)
                 quantity = item['quantity']
+                print("recorded",quantity)
                 sub_total = item['sub_total']
+                print("recorded",sub_total)
                 try:
-                    record = Records.objects.get(food = food_name)
-                    
+                    record = Records.objects.get(food=food_name)
+                    print("data")
                 except Records.DoesNotExist:
-                    return Response({'detail': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+                    # Create a new instance of Records
+                    record = Records.objects.create(food=food_name)
+                    print("New instance created.")
+
                 record.tquantity += quantity
+      
                 record.tamount += sub_total
-                
+             
                 record.save()
+                print("saved")
             if item['food']['is_avilable'] == False:
                 unavilable_food = item['sub_total']
                 convert_to_points(unavilable_food,user)
@@ -48,8 +56,10 @@ def recorder(food, user):
 
 
 class RecordsAPIview(views.APIView):
-    def get(self,request):
-        serializer = RecordSerializer
+    def get(self, request):
+        # Assuming you have a queryset or instance to serialize
+        queryset = Records.objects.all()  # Replace YourModel with your actual model name
+        serializer = RecordSerializer(queryset, many=True)  # Instantiate the serializer with queryset
         return Response(serializer.data, status=status.HTTP_200_OK)
             
 class ConvertTodailyRecord(views.APIView):
@@ -76,8 +86,10 @@ class ConvertTodailyRecord(views.APIView):
     
     
 class Dailyrecordviews(views.APIView):
-    def get(self,request):
-        serializer = DailyRecordSerializer
+    def get(self, request):
+        # Assuming you have a queryset or instance to serialize
+        queryset = DailyRecord.objects.all()  # Replace YourModel with your actual model name
+        serializer = DailyRecordSerializer(queryset, many=True)  # Instantiate the serializer with queryset
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     

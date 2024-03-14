@@ -8,6 +8,8 @@ from .models import Verifications
 import string
 import random
 from django.core.mail import EmailMultiAlternatives
+from twilio.rest import Client
+from twilio.base.exceptions import TwilioRestException
 
 
 def generate_verification_code(length=4):
@@ -18,58 +20,31 @@ def generate_verification_code(length=4):
 
 
 
-def send_Verification_Email(request,email, name, code):
-    verification_code = code
-    
-
-    # Set the verification code and its expiration time
-    verifications = Verifications.objects.create(email = email ,verification_code=verification_code, verification_code_sent=datetime.now(timezone.utc))
-    verifications.save()
-
-    # Render the HTML email template with dynamic content
-    html_message = render_to_string('email.html', {'recipient_name': name, 'verification_code': verification_code})
-    plain_message = strip_tags(html_message)  # Strip HTML tags for the plain text version
-
-    # Send email
+def send_center_sms(data, user):
     try:
-        send_mail(
-            'Verification Code - Your Website',
-            plain_message,
-            'michaelmaiyo44@gmail.com',  # Sender's email address
-            [email],  # Recipient's email address
-            html_message=html_message  # Attach the HTML message
+        print('step 1')
+        account_sid = "AC94d634c48c7f12dfb8f6af8f0b1614c2"
+        auth_token = "50917f3e65a520aeb570f376e9b1a5e5"
+        client = Client(account_sid, auth_token)
+
+        # Format the data and user details for better readability
+        formatted_data = '\n'.join([f"{item['food_name']}: {item['quantity']} x {item['sub_total']}" for item in data])
+        formatted_user = f"User ID: {user['user_id']}\nPhone: {user['user_phone_number']}\nName: {user['user_first_name']} {user['user_last_name']}"
+
+        # Construct the final message
+        message_body = f"New order:\n{formatted_data}\n\n{formatted_user}"
+
+        message = client.messages.create(
+            body=message_body,
+            from_='+13343842451',
+            to='+254797759614'
         )
-        # Email sent successfully
-        return 'Email sent successfully.'
-    except SMTPException as e:
-        # Handle the exception
-        print(f"Email sending failed: {e}")
-        # Provide an error message to the user
-        return 'Failed to send the email. Please try again later.'
+        print('step 3')
+    except TwilioRestException as e:
+        print(f"Twilio error: {e}")
+        # Handle the exception or return an error response
+        return f'Failed {e}'
 
 
 
-def Orderdfood_emailer(request, email, fName, Lname, ordered_food):
-    subject = 'Thank You for Your Food Order'
-    from_email =  'michaelmaiyo44@gmail.com' 
-    to_email = email
 
-    # Render the HTML content from the template
-    html_message = render_to_string('email_template.html', {'ordered_food': ordered_food, 'fName': fName, 'Lname': Lname})
-
-    # Create the plain text version of the email
-    plain_message = strip_tags(html_message)
-
-    # Create the email message
-    email_message = EmailMultiAlternatives(subject, plain_message, from_email, [to_email])
-    email_message.attach_alternative(html_message, 'text/html')
-
-    try:
-        email_message.send()
-        # Email sent successfully
-        return 'Email sent successfully.'
-    except Exception as e:
-        # Handle the exception
-        print(f"Email sending failed: {e}")
-        # Provide an error message to the user
-        return 'Failed to send the email. Please try again later.'

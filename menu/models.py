@@ -102,7 +102,7 @@ class  Order(models.Model):
     state = models.CharField(max_length=50, choices= STATUS , default= PENDING_ORDER)
     qrc_image = models.ImageField(upload_to='qr_code_images',  null=True)
     reciept = models.FileField(upload_to='reciepts', null= True)
-    scaned_time = models.DateTimeField( auto_now=True, auto_now_add=False, null= True)
+    scaned_time = models.DateTimeField( auto_now=False, auto_now_add=False, null= True)
     payment_mode =models.CharField(max_length=50, choices= MODE_OF_PAYMENTS , default= 'mpesa')
     
     class Meta:
