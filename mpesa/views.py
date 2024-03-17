@@ -21,6 +21,7 @@ def stk_push_callback(request):
 from __future__ import unicode_literals
 
 import json
+from Profile.models import Profile
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.generic import View
@@ -50,6 +51,38 @@ from django.conf import settings
 import cloudinary
 from cloudinary import uploader
 # Create your views here.
+
+def convert_order_to_points(order_id):
+    try:
+        order = Order.objects.get(order_id=order_id)
+        total = sum([item.quantity * item.food.price for item in order.ordered_food.all()])
+        print('Total: ', total)
+        points = total * 5
+        
+        # Update the user's profile
+        order.user.profile.points += points
+        order.user.profile.save()
+        
+    except Order.DoesNotExist:
+        print(f"Order with ID {order_id} does not exist")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+
+class ConvertOrderToPointsAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        order_id = request.data.get('order_id')  # Assuming you're sending order_id in the request data
+        if order_id:
+            try:
+                convert_order_to_points(order_id)
+                return Response({'message': 'Points awarded successfully'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({'error': 'Order ID parameter missing'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+
 def QR_code_generator(order_id):
     try:
         # Generate QR code with the order ID
@@ -66,6 +99,7 @@ def QR_code_generator(order_id):
         # Upload the QR code image to Cloudinary
         cloudinary.config(
             cloud_name=settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
+        
             api_key=settings.CLOUDINARY_STORAGE['API_KEY'],
             api_secret=settings.CLOUDINARY_STORAGE['API_SECRET']
         )
