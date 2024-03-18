@@ -58,10 +58,11 @@ def convert_order_to_points(order_id):
         total = sum([item.quantity * item.food.price for item in order.ordered_food.all()])
         print('Total: ', total)
         points = total * 5
-        
+        order.state = 'r'
         # Update the user's profile
         order.user.profile.points += points
         order.user.profile.save()
+        order.save()
         
     except Order.DoesNotExist:
         print(f"Order with ID {order_id} does not exist")

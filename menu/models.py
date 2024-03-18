@@ -84,11 +84,13 @@ class Add_item_to_cart(models.Model):
 PENDING_ORDER = 'p'
 COMPLETE_ORDER = 'c'
 CANCELED_ORDER = 'f'
+RESTATED = 'r'
 
 STATUS = (
     (PENDING_ORDER , 'Pending'),
     (COMPLETE_ORDER, 'Complete'),
     (CANCELED_ORDER, 'Failed'),
+    (RESTATED, 'restated'),
 )
 MODE_OF_PAYMENTS = (
     ('MPESA','mpesa'),
