@@ -28,7 +28,7 @@ from django.views.generic import View
 from .mpesa import sendSTK, check_payment_status
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST,HTTP_404_NOT_FOUND
+from rest_framework.status import HTTP_200_OK,HTTP_404_NOT_FOUND
 from rest_framework.response import Response
 from .models import PaymentTransaction
 from django.http import JsonResponse
@@ -426,12 +426,12 @@ class PaymentTransactionListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return PaymentTransaction.objects.filter(is_successful= False)
+        return PaymentTransaction.objects.all()
 
 class SearchTransaction(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, trans_id, format=None):
+    def get(self, request, trans_id, format=None): 
         # Use a GET request and specify trans_id as a URL parameter
         # This allows you to retrieve a specific transaction directly
         transaction = get_object_or_404(PaymentTransaction, trans_id=trans_id)
